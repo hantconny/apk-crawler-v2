@@ -13,7 +13,7 @@ logger.add('apk_crawler_{time:YYYYMMDD}.log', rotation="50 MB", retention="3 day
 
 def flush_data(file, data):
     with open(file, mode='w', encoding='utf-8') as file:
-        file.write('\n'.join(['#@=|||=@#'.join([app, dev, cat, down, desc]) for app, dev, cat, down, desc in set(data)]))
+        file.write('\n'.join(['#@=|||=@#'.join([app, dev, cat, down, desc, '', '']) for app, dev, cat, down, desc in set(data)]))
 
 
 def google_play(box, _category):
@@ -43,7 +43,7 @@ def google_play(box, _category):
     finally:
         tab.close()
 
-    logger.info('#@=|||=@#'.join([app_name, app_developer, app_category, downloads, desc]))
+    logger.info('#@=|||=@#'.join([app_name, app_developer, app_category, downloads, desc, '', '']))
 
     return app_name, app_developer, app_category, downloads, desc
 
