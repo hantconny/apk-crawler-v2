@@ -19,10 +19,7 @@ logger.add('apk_crawler_{time:YYYYMMDD}.log', rotation="50 MB", retention="3 day
 def flush_data(file, data):
     with open(file, mode='w', encoding='utf-8', newline='') as file:
         writer = csv.writer(file, quoting=csv.QUOTE_ALL)
-        writer.writerow(['App Name', 'App Developer', 'App Category', 'App Downloads', 'App Description', 'blank 1',
-                         'blank 2'])  # 添加标题行
-        writer.writerows([[app, dev, cat, down, desc, '', ''] for app, dev, cat, down, desc in set(data)])
-        # file.write('\n'.join(['#@=|||=@#'.join([app, dev, cat, down, desc, '', '']) for app, dev, cat, down, desc in set(data)]))
+        writer.writerows([[app, dev, cat, desc, down, '', ''] for app, dev, cat, desc, down in set(data)])
 
 
 def google_play(box, _category):
@@ -52,9 +49,9 @@ def google_play(box, _category):
     finally:
         tab.close()
 
-    logger.info('#@=|||=@#'.join([app_name, app_developer, app_category, downloads, desc]))
+    logger.info('#@=|||=@#'.join([app_name, app_developer, app_category, desc, downloads]))
 
-    return app_name, app_developer, app_category, downloads, desc
+    return app_name, app_developer, app_category, desc, downloads
 
 
 def keep_click(load_more_btn):
