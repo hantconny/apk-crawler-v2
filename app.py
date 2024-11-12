@@ -1,19 +1,28 @@
 # -*- coding:utf-8 -*-
+import csv
 import time
 import traceback
 
 from DrissionPage import ChromiumPage
+# from DrissionPage import ChromiumPage, ChromiumOptions
 from loguru import logger
+
+# 对于Chrome没有安装在默认位置的，指定Chrome安装路径。
+# ChromiumOptions().set_browser_path(r"C:\Program Files\chrome-win64\chrome.exe").save()
 
 driver = ChromiumPage()
 
 logger.add('apk_crawler_{time:YYYYMMDD}.log', rotation="50 MB", retention="3 days",
-           compression="gz", enqueue=True)
+           compression="gz", enqueue=True, encoding='utf-8')
 
 
 def flush_data(file, data):
-    with open(file, mode='w', encoding='utf-8') as file:
-        file.write('\n'.join(['#@=|||=@#'.join([app, dev, cat, down, desc, '', '']) for app, dev, cat, down, desc in set(data)]))
+    with open(file, mode='w', encoding='utf-8', newline='') as file:
+        writer = csv.writer(file, quoting=csv.QUOTE_ALL)
+        writer.writerow(['App Name', 'App Developer', 'App Category', 'App Downloads', 'App Description', 'blank 1',
+                         'blank 2'])  # 添加标题行
+        writer.writerows([[app, dev, cat, down, desc, '', ''] for app, dev, cat, down, desc in set(data)])
+        # file.write('\n'.join(['#@=|||=@#'.join([app, dev, cat, down, desc, '', '']) for app, dev, cat, down, desc in set(data)]))
 
 
 def google_play(box, _category):
@@ -43,7 +52,7 @@ def google_play(box, _category):
     finally:
         tab.close()
 
-    logger.info('#@=|||=@#'.join([app_name, app_developer, app_category, downloads, desc, '', '']))
+    logger.info('#@=|||=@#'.join([app_name, app_developer, app_category, downloads, desc]))
 
     return app_name, app_developer, app_category, downloads, desc
 
@@ -79,8 +88,8 @@ def go(url, category):
         print(traceback.format_exc())
 
 
-def category():
-    driver.get('https://apkpure.com/app')
+def category(game_or_app):
+    driver.get('https://apkpure.com/{}'.format(game_or_app))
 
     # 网站的样式就包含空格，不要去掉
     return [i_category.attr('href') for i_category in driver.ele('.apk-name-list ').eles('tag:a')]
@@ -88,14 +97,15 @@ def category():
 
 if __name__ == '__main__':
     result = []
-    categories = category()
-    # categories = ['https://apkpure.com/maps_and_navigation']
-    for category_url in categories:
+    game_categories = category('game')
+    app_categories = category('app')
+    # categories = ['https://apkpure.com/art_and_design']
+    for category_url in set(game_categories + app_categories):
         category_title = category_url.rsplit('/', 1)[-1].replace('_', ' ').title().replace('And', '&')
         category_result = go(category_url, category_title)
 
-        flush_data('{}.text'.format(category_title), category_result)
+        flush_data('{}.csv'.format(category_title), category_result)
 
         result.extend(category_result)
 
-    flush_data('app_info.text', result)
+    flush_data('apk_info.csv', result)
