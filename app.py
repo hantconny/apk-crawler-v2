@@ -1,23 +1,27 @@
 # -*- coding:utf-8 -*-
 import csv
+import os.path
 import time
 import traceback
 
-from DrissionPage import ChromiumPage
-# from DrissionPage import ChromiumPage, ChromiumOptions
+from DrissionPage import ChromiumPage, ChromiumOptions
 from loguru import logger
 
+from settings import CHROME_TEST, DUMP_DIR, GOOGLE_PLAY_DETAIL_PAGE, APKPURE_PATTERN
+
 # 对于Chrome没有安装在默认位置的，指定Chrome安装路径。
-# ChromiumOptions().set_browser_path(r"C:\Program Files\chrome-win64\chrome.exe").save()
+if CHROME_TEST:
+    ChromiumOptions().set_browser_path(CHROME_TEST).save()
 
 driver = ChromiumPage()
 
-logger.add('apk_crawler_{time:YYYYMMDD}.log', rotation="50 MB", retention="3 days",
+logger.add(os.path.join(DUMP_DIR, 'apk_crawler_{time:YYYYMMDD}.log'),
+           rotation="50 MB", retention="3 days",
            compression="gz", enqueue=True, encoding='utf-8')
 
 
-def flush_data(file, data):
-    with open(file, mode='w', encoding='utf-8', newline='') as file:
+def flush_data(filename, data):
+    with open(os.path.join(DUMP_DIR, filename), mode='w', encoding='utf-8', newline='') as file:
         writer = csv.writer(file, quoting=csv.QUOTE_ALL)
         writer.writerows([[app, dev, cat, desc, down, '', ''] for app, dev, cat, desc, down in set(data)])
 
@@ -30,7 +34,7 @@ def google_play(box, _category):
 
     tab = driver.new_tab()
     try:
-        tab.get("https://play.google.com/store/apps/details?id={}".format(package_name))
+        tab.get(GOOGLE_PLAY_DETAIL_PAGE.format(package_name))
 
         detail_btn = tab.ele('.VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ QDwDD mN1ivc VxpoF')
         if detail_btn:
@@ -45,7 +49,7 @@ def google_play(box, _category):
     except Exception as e:
         logger.error(traceback.format_exc())
         downloads = '0'
-        desc = ''
+        desc = 'None'
     finally:
         tab.close()
 
@@ -86,7 +90,7 @@ def go(url, category):
 
 
 def category(game_or_app):
-    driver.get('https://apkpure.com/{}'.format(game_or_app))
+    driver.get(APKPURE_PATTERN.format(game_or_app))
 
     # 网站的样式就包含空格，不要去掉
     return [i_category.attr('href') for i_category in driver.ele('.apk-name-list ').eles('tag:a')]
@@ -94,10 +98,9 @@ def category(game_or_app):
 
 if __name__ == '__main__':
     result = []
-    game_categories = category('game')
-    app_categories = category('app')
+    categories = category('game') + category('app')
     # categories = ['https://apkpure.com/art_and_design']
-    for category_url in set(game_categories + app_categories):
+    for category_url in categories:
         category_title = category_url.rsplit('/', 1)[-1].replace('_', ' ').title().replace('And', '&')
         category_result = go(category_url, category_title)
 
