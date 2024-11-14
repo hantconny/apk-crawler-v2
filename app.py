@@ -20,6 +20,18 @@ logger.add(os.path.join(DUMP_DIR, 'apk_crawler_{time:YYYYMMDD}.log'),
            compression="gz", enqueue=True, encoding='utf-8')
 
 
+def format_downloads(downloads):
+    clean_downloads = int(downloads.replace(',', '').replace('+', ''))
+    if clean_downloads >= 1000000000:
+        return "{}B+".format(int(clean_downloads / 1000000000))
+    elif clean_downloads >= 1000000:
+        return "{}M+".format(int(clean_downloads / 1000000))
+    elif clean_downloads >= 1000:
+        return "{}K+".format(int(clean_downloads / 1000))
+    else:
+        return "{}+".format(clean_downloads)
+
+
 def flush_data(filename, data):
     with open(os.path.join(DUMP_DIR, filename), mode='w', encoding='utf-8', newline='') as file:
         writer = csv.writer(file, quoting=csv.QUOTE_ALL)
@@ -55,7 +67,7 @@ def google_play(box, _category):
 
     logger.info('#@=|||=@#'.join([app_name, app_developer, app_category, desc, downloads]))
 
-    return app_name, app_developer, app_category, desc, downloads
+    return app_name, app_developer, app_category, desc, format_downloads(downloads)
 
 
 def keep_click(load_more_btn):
