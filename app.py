@@ -67,7 +67,7 @@ def google_play(box, _category):
 
     logger.info('#@=|||=@#'.join([app_name, app_developer, app_category, desc, downloads]))
 
-    return app_name, app_developer, app_category, desc, format_downloads(downloads)
+    return app_name, app_developer, app_category, desc, downloads.replace(',', '')
 
 
 def keep_click(load_more_btn):
