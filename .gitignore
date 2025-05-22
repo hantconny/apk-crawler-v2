@@ -3,5 +3,6 @@
 *.bat
 *.db
 *.zip
-/.idea/
-*/__pycache__
+log/
+.idea/
+__pycache__/
